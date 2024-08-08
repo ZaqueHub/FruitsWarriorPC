@@ -181,7 +181,7 @@ end
 local Settings = Settings or {} do
   Settings.AutoStats_Points = 1
   Settings.BringMobs = true
-  Settings.FarmDistance = 7
+  Settings.FarmDistance = 6
   Settings.ViewHitbox = false
   Settings.AntiAFK = true
   Settings.AutoHaki = true
@@ -242,10 +242,16 @@ local function BringMobsTo(_Enemie, CFrame, SBring)
     if (SBring or v.Name == _Enemie) and IsAlive(v) then
       local PP, Hum = v.PrimaryPart, v.Humanoid
       if PP and (PP.Position - CFrame.p).Magnitude < 500 then
-        Hum.WalkSpeed = 0
-        Hum:ChangeState(14)
+        Hum.WalkSpeed = 0 -- Stop the mob from moving
+        Hum:ChangeState(Enum.HumanoidStateType.Physics) -- Keeps the mob stationary
+        
+        -- Set CFrame and make sure they stay at that position
         PP.CFrame = CFrame
         PP.CanCollide = false
+        PP.Velocity = Vector3.new(0, 0, 0) -- Stop any momentum
+        PP.RotVelocity = Vector3.new(0, 0, 0) -- Stop any rotational movement
+        PP.Anchored = true -- Anchor the PrimaryPart to keep it from moving
+        
         PP.Transparency = Settings.ViewHitbox and 0.8 or 1
         PP.Size = Vector3.new(50, 50, 50)
       end
@@ -253,6 +259,8 @@ local function BringMobsTo(_Enemie, CFrame, SBring)
   end
   return pcall(sethiddenproperty, Player, "SimulationRadius", _huge)
 end
+
+
 
 local function KillMonster(_Enemie, SBring)
   local Enemy = typeof(_Enemie) == "Instance" and _Enemie or GetNextEnemie(_Enemie)
@@ -437,7 +445,7 @@ end
 local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/Tienvn123tkvn/Test/main/ZINERHUB_Ui.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Tienvn123tkvn/Test/main/ZierhubManager.lua"))()
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Tienvn123tkvn/Test/main/ZierhubfaceManager.lua"))()
-
+do
 local Window = Fluent:CreateWindow({
     Title = "Shiny Hub",
     SubTitle = "Tempest",
@@ -485,9 +493,96 @@ end)
 -- Toggle for Bring Mob
 local ToggleBring = Tabs.Setting:AddToggle("ToggleBring", {
     Title = "Bring Mob",
-    Description = "",
+    Description = "Turn on auto skill for fast farm",
     Default = true
 })
+
+-- Define the ToggleSkill toggle
+local ToggleSkill = Tabs.Setting:AddToggle("ToggleSkill", {
+  Title = "Spam Skill",
+  Description = "",
+  Default = false
+})
+
+-- Variable to control AutoSkill state
+local AutoSkill = false
+
+-- Connect the ToggleSkill to control AutoSkill
+ToggleSkill:OnChanged(function(value)
+  AutoSkill = value
+end)
+
+-- Auto skill function
+spawn(function(AutoSkill)
+  while wait() do
+      pcall(function()
+          if AutoSkill then
+              if Skillz then
+                  game:service('VirtualInputManager'):SendKeyEvent(true, "Z", false, game)
+                  wait(.1)
+                  game:service('VirtualInputManager'):SendKeyEvent(false, "Z", false, game)
+              end
+              if Skillx then
+                  game:service('VirtualInputManager'):SendKeyEvent(true, "X", false, game)
+                  wait(.1)
+                  game:service('VirtualInputManager'):SendKeyEvent(false, "X", false, game)
+              end
+              if Skillc then
+                  game:service('VirtualInputManager'):SendKeyEvent(true, "C", false, game)
+                  wait(.1)
+                  game:service('VirtualInputManager'):SendKeyEvent(false, "C", false, game)
+              end
+              if Skillv then
+                  game:service('VirtualInputManager'):SendKeyEvent(true, "V", false, game)
+                  wait(.1)
+                  game:service('VirtualInputManager'):SendKeyEvent(false, "V", false, game)
+              end
+          end
+      end)
+  end
+end)
+
+-- Create the toggles for each skill
+local ToggleZ = Tabs.Setting:AddToggle("ToggleZ", {
+    Title = "Auto Skill Z",
+    Description = "",
+    Default = false
+})
+
+local ToggleX = Tabs.Setting:AddToggle("ToggleX", {
+    Title = "Auto Skill X",
+    Description = "",
+    Default = false
+})
+
+local ToggleC = Tabs.Setting:AddToggle("ToggleC", {
+    Title = "Auto Skill C",
+    Description = "",
+    Default = false
+})
+
+local ToggleV = Tabs.Setting:AddToggle("ToggleV", {
+    Title = "Auto Skill V",
+    Description = "",
+    Default = false
+})
+
+-- Set up the toggle behavior
+ToggleZ:OnChanged(function(value)
+    Skillz = value
+end)
+
+ToggleX:OnChanged(function(value)
+    Skillx = value
+end)
+
+ToggleC:OnChanged(function(value)
+    Skillc = value
+end)
+
+ToggleV:OnChanged(function(value)
+    Skillv = value
+end)
 
 ToggleBring:OnChanged(function(Value)
     Settings.BringMobs = Value -- Activate or deactivate the Bring Mobs functionality based on toggle
@@ -570,6 +665,30 @@ local ToggleAutoLordSus = Tabs.Boss:AddToggle("ToggleAutoLordSus", {
     Callback = function(value)
         _env["Lord Sus"] = value
     end
+})
+
+local ToggleBuyPower = Tabs.Setting:AddToggle("ToggleBuyPower", {
+  Title = "Auto Store Power",
+  Description = "Automatically store power",
+  Default = false,
+  Callback = function(value)
+      _env["Store Power"] = value
+      if value then
+          -- Start auto-buying when the toggle is enabled
+          spawn(function()
+              while _env["Store Power"] do
+                  wait(3) -- Adjust the interval if necessary
+                  pcall(function()
+                      OtherEvent.MainEvents.Modules:FireServer("Random_Power", {
+                          Type = "Decuple",
+                          NPCName = "Floppa Gacha",
+                          GachaType = "Money"
+                      })
+                  end)
+              end
+          end)
+      end
+  end
 })
 
 local ToggleAutoStorePower = Tabs.Setting:AddToggle("ToggleAutoStorePower", {
@@ -709,34 +828,39 @@ task.spawn(function()
 end)
 
 -- Lấy tất cả các hòn đảo từ workspace
+-- Function to get the list of island names
 local function GetIslandList()
-    local islandList = {}
-    local islandFolder = workspace:FindFirstChild("Island")
-    
-    if islandFolder then
-        for _, island in ipairs(islandFolder:GetChildren()) do
-            if island:IsA("Model") and island.Name then
-                table.insert(islandList, island.Name)
-            end
-        end
-    end
-    
-    return islandList
+  local islandList = {}
+  local islandFolder = workspace:FindFirstChild("Island")
+  
+  if islandFolder then
+      for _, island in ipairs(islandFolder:GetChildren()) do
+          if island:IsA("Model") and island.Name then
+              table.insert(islandList, island.Name)
+          end
+      end
+  end
+  
+  return islandList
 end
 
--- Tạo dropdown với danh sách hòn đảo
+-- Retrieve the list of islands
+local IslandList = GetIslandList()
+
+-- Create dropdown with the island list
 local IslandDropdown = Tabs.Tele:AddDropdown("IslandDropdown", {
-    Title = "Soon",
-    Values = IslandList, -- Sử dụng danh sách đảo đã tạo
-    Default = "DefaultIsland", -- Default island to teleport to (change as needed)
-    Callback = function(selectedIsland)
-        -- Function để teleport đến đảo đã chọn
-        local selectedIslandCFrame = Loaded.Islands[selectedIsland] and Loaded.Islands[selectedIsland].CFrame
-        if selectedIslandCFrame then
-            GoTo(selectedIslandCFrame) -- Thực hiện teleport
-        end
-    end
+  Title = "Select Island",
+  Values = IslandList, -- Use the retrieved list of islands
+  Default = IslandList[1] or "DefaultIsland", -- Set a default island (use the first one if available)
+  Callback = function(selectedIsland)
+      -- Function to teleport to the selected island
+      local selectedIslandCFrame = Loaded.Islands[selectedIsland] and Loaded.Islands[selectedIsland].CFrame
+      if selectedIslandCFrame then
+          GoTo(selectedIslandCFrame) -- Perform the teleport
+      end
+  end
 })
+
 
 local ScreenGui = Instance.new("ScreenGui")
 local ImageButton = Instance.new("ImageButton")
@@ -755,3 +879,4 @@ ImageButton.Image = "http://www.roblox.com/asset/?id=18622932541"
 ImageButton.MouseButton1Down:connect(function()
     game:GetService("VirtualInputManager"):SendKeyEvent(true,Enum.KeyCode.End,false,game)
 end)
+end
