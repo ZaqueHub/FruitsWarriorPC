@@ -237,25 +237,24 @@ local function EquipWeapon()
   end
 end
 
-local function BringMobsTo(_Enemie, CFrame, SBring)
+local function BringMobsTo(_Enemie, TargetCFrame, SBring)
+  local GatherPosition = TargetCFrame.Position -- Position to gather mobs
   for _,v in ipairs(Monsters:GetChildren()) do
-    if (SBring or v.Name == _Enemie) and IsAlive(v) then
-      local PP, Hum = v.PrimaryPart, v.Humanoid
-      if PP and (PP.Position - CFrame.p).Magnitude < 500 then
-        Hum.WalkSpeed = 0 -- Stop the mob from moving
-        Hum:ChangeState(Enum.HumanoidStateType.Physics) -- Keeps the mob stationary
-        
-        -- Set CFrame and make sure they stay at that position
-        PP.CFrame = CFrame
-        PP.CanCollide = false
-        PP.Velocity = Vector3.new(0, 0, 0) -- Stop any momentum
-        PP.RotVelocity = Vector3.new(0, 0, 0) -- Stop any rotational movement
-        PP.Anchored = true -- Anchor the PrimaryPart to keep it from moving
-        
-        PP.Transparency = Settings.ViewHitbox and 0.8 or 1
-        PP.Size = Vector3.new(50, 50, 50)
+      if (SBring or v.Name == _Enemie) and IsAlive(v) then
+          local PP, Hum = v.PrimaryPart, v.Humanoid
+          if PP and (PP.Position - TargetCFrame.Position).Magnitude < 500 then
+              Hum.WalkSpeed = 0
+              Hum:ChangeState(Enum.HumanoidStateType.Physics)
+              
+              -- Move the mobs to the gather position
+              PP.CFrame = CFrame.new(GatherPosition)
+              PP.CanCollide = false
+              PP.Velocity = Vector3.new(0, 0, 0) 
+              PP.RotVelocity = Vector3.new(0, 0, 0)
+              
+              PP.Size = Vector3.new(50, 50, 50)
+          end
       end
-    end
   end
   return pcall(sethiddenproperty, Player, "SimulationRadius", _huge)
 end
@@ -497,12 +496,7 @@ local ToggleBring = Tabs.Setting:AddToggle("ToggleBring", {
     Default = true
 })
 
--- Define the ToggleSkill toggle
-local ToggleSkill = Tabs.Setting:AddToggle("ToggleSkill", {
-  Title = "Spam Skill",
-  Description = "",
-  Default = false
-})
+
 
 -- Variable to control AutoSkill state
 local AutoSkill = false
@@ -668,15 +662,15 @@ local ToggleAutoLordSus = Tabs.Boss:AddToggle("ToggleAutoLordSus", {
 })
 
 local ToggleBuyPower = Tabs.Setting:AddToggle("ToggleBuyPower", {
-  Title = "Auto Store Power",
-  Description = "Automatically store power",
+  Title = "Auto Buy Power",
+  Description = "Automatically Buy power",
   Default = false,
   Callback = function(value)
-      _env["Store Power"] = value
+      _env["Buy Power"] = value
       if value then
           -- Start auto-buying when the toggle is enabled
           spawn(function()
-              while _env["Store Power"] do
+              while _env["Buy Power"] do
                   wait(3) -- Adjust the interval if necessary
                   pcall(function()
                       OtherEvent.MainEvents.Modules:FireServer("Random_Power", {
@@ -692,12 +686,21 @@ local ToggleBuyPower = Tabs.Setting:AddToggle("ToggleBuyPower", {
 })
 
 local ToggleAutoStorePower = Tabs.Setting:AddToggle("ToggleAutoStorePower", {
-    Title = "Auto Store Power",
-    Description = "Automatically store power",
-    Default = false,
-    Callback = function(value)
-        _env["Store Power"] = value
-    end
+  Title = "Auto Store Power",
+  Description = "Automatically store power",
+  Default = false,
+  Callback = function(value)
+      _env.AutoStorePowers = value
+      while _env.AutoStorePowers do
+          task.wait() -- Using task.wait() is better than _wait() for performance
+          for _,v in ipairs(Player.Backpack:GetChildren()) do
+              if v:IsA("Tool") and v.ToolTip == "Power" and v:GetAttribute("Using") == nil then
+                  v.Parent = Player.Character
+                  OtherEvent.MainEvents.Modules:FireServer("Eatable_Power", { Action = "Store", Tool = v })
+              end
+          end
+      end
+  end
 })
 
 local ToggleAutoFarmNearest = Tabs.Misc:AddToggle("ToggleAutoFarmNearest", {
