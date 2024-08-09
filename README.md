@@ -497,6 +497,11 @@ local ToggleBring = Tabs.Setting:AddToggle("ToggleBring", {
 })
 
 
+local ToggleSkill = Tabs.Setting:AddToggle("ToggleSkill", {
+  Title = "Spam Skill",
+  Description = "",
+  Default = false
+})
 
 -- Variable to control AutoSkill state
 local AutoSkill = false
@@ -671,7 +676,7 @@ local ToggleBuyPower = Tabs.Setting:AddToggle("ToggleBuyPower", {
           -- Start auto-buying when the toggle is enabled
           spawn(function()
               while _env["Buy Power"] do
-                  wait(3) -- Adjust the interval if necessary
+                  wait(1) -- Adjust the interval if necessary
                   pcall(function()
                       OtherEvent.MainEvents.Modules:FireServer("Random_Power", {
                           Type = "Decuple",
