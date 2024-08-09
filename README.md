@@ -181,7 +181,7 @@ end
 local Settings = Settings or {} do
   Settings.AutoStats_Points = 1
   Settings.BringMobs = true
-  Settings.FarmDistance = 6
+  Settings.FarmDistance = 7.5
   Settings.ViewHitbox = false
   Settings.AntiAFK = true
   Settings.AutoHaki = true
